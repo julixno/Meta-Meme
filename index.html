@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>meta-meme.exe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black: #030303;
+  --panel: #0d0d0d;
+  --panel-2: #131313;
+  --line: #262626;
+  --red: #ff2d3f;
+  --red-dim: #a3111f;
+  --red-glow: rgba(255, 45, 63, 0.35);
+  --white: #ededed;
+  --grey: #7a7a7a;
+  --grey-dim: #4a4a4a;
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  background: var(--black);
+  color: var(--white);
+  font-family: var(--mono);
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255,45,63,0.06), transparent 55%),
+    var(--black);
+  overflow-x: hidden;
+}
+
+.crt-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255,255,255,0.02) 0px,
+    rgba(255,255,255,0.02) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mix-blend-mode: overlay;
+}
+
+.terminal {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  background: linear-gradient(180deg, var(--panel), var(--panel-2));
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow:
+    0 0 0 1px rgba(255,45,63,0.08),
+    0 30px 80px -20px rgba(0,0,0,0.8),
+    0 0 60px -10px var(--red-glow);
+  overflow: hidden;
+}
+
+.titlebar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #0a0a0a;
+  border-bottom: 1px solid var(--line);
+}
+
+.dots { display: flex; gap: 7px; }
+.dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--grey-dim);
+}
+.dot-red {
+  background: var(--red);
+  box-shadow: 0 0 8px var(--red-glow);
+}
+
+.titlebar-name {
+  flex: 1;
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: var(--grey);
+  text-transform: lowercase;
+}
+
+.clock {
+  font-size: 11px;
+  color: var(--grey-dim);
+  letter-spacing: 0.06em;
+  min-width: 60px;
+  text-align: right;
+}
+
+.scanline {
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--red), transparent);
+  opacity: 0.5;
+  top: 41px;
+  animation: scan 6s linear infinite;
+  pointer-events: none;
+}
+@keyframes scan {
+  0% { transform: translateY(0); opacity: 0; }
+  10% { opacity: 0.5; }
+  90% { opacity: 0.5; }
+  100% { transform: translateY(520px); opacity: 0; }
+}
+
+.screen {
+  min-height: 420px;
+  padding: 28px 26px 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
+}
+
+.statusbar {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-top: 1px solid var(--line);
+  background: #0a0a0a;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--grey-dim);
+  text-transform: uppercase;
+}
+#status-left.active { color: var(--red); }
+
+/* --- prompt / text --- */
+.prompt-line {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  color: var(--grey);
+  font-size: 13px;
+}
+.prompt-sym { color: var(--red); font-weight: 700; }
+
+.hero-title {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  color: var(--white);
+}
+.hero-title .accent {
+  color: var(--red);
+  text-shadow: 0 0 18px var(--red-glow);
+}
+
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+
+.body-text {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #cfcfcf;
+  white-space: pre-line;
+}
+
+.meme-card {
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--red);
+  background: rgba(255,45,63,0.04);
+  padding: 18px 18px;
+  border-radius: 4px;
+  font-size: 15px;
+  line-height: 1.75;
+  white-space: pre-line;
+  color: var(--white);
+  animation: fadein 0.35s ease;
+}
+@keyframes fadein {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.meme-tag {
+  font-size: 11px;
+  color: var(--grey);
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+.meme-tag b { color: var(--red); }
+
+/* --- roll number (signature element) --- */
+.roll-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 0 4px;
+}
+.roll-number {
+  font-size: 64px;
+  font-weight: 800;
+  color: var(--red);
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 30px var(--red-glow);
+  font-variant-numeric: tabular-nums;
+}
+.roll-number.settled {
+  animation: settle 0.4s ease;
+}
+@keyframes settle {
+  0% { transform: scale(1.15); text-shadow: 0 0 45px var(--red); }
+  100% { transform: scale(1); text-shadow: 0 0 30px var(--red-glow); }
+}
+.roll-label {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--grey);
+}
+
+/* --- buttons / options --- */
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.opt-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--white);
+  font-family: var(--mono);
+  font-size: 14px;
+  padding: 12px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+}
+.opt-btn .key {
+  color: var(--red);
+  font-weight: 700;
+  min-width: 22px;
+}
+.opt-btn:hover, .opt-btn:focus-visible {
+  border-color: var(--red);
+  background: rgba(255,45,63,0.07);
+  outline: none;
+}
+.opt-btn:active { transform: scale(0.99); }
+
+.row {
+  display: flex;
+  gap: 10px;
+}
+.row .opt-btn { flex: 1; justify-content: center; }
+
+.opt-btn.danger { border-color: var(--red-dim); color: var(--red); }
+.opt-btn.danger:hover { background: rgba(255,45,63,0.1); }
+.opt-btn.ghost { border-color: transparent; color: var(--grey-dim); font-size: 11px; letter-spacing: 0.08em; }
+.opt-btn.ghost:hover { color: var(--red); background: transparent; border-color: transparent; }
+
+/* --- inputs --- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.field label {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--grey);
+}
+.field input {
+  background: #050505;
+  border: 1px solid var(--line);
+  color: var(--white);
+  font-family: var(--mono);
+  font-size: 15px;
+  padding: 12px 14px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+}
+.field input:focus {
+  outline: none;
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px var(--red-glow);
+}
+.error-text {
+  color: var(--red);
+  font-size: 12px;
+  min-height: 14px;
+}
+
+/* cursor */
+.cursor {
+  display: inline-block;
+  width: 8px;
+  height: 15px;
+  background: var(--red);
+  margin-left: 4px;
+  animation: blink 1s step-end infinite;
+  vertical-align: text-bottom;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* owner list */
+.list-wrap {
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-right: 4px;
+}
+.list-wrap::-webkit-scrollbar { width: 6px; }
+.list-wrap::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+
+.list-item {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-line;
+  color: #cfcfcf;
+}
+.list-item .idx { color: var(--red); font-weight: 700; }
+
+footer.hint {
+  font-size: 11px;
+  color: var(--grey-dim);
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 480px) {
+  .screen { padding: 22px 18px 18px; min-height: 380px; }
+  .hero-title { font-size: 21px; }
+  .roll-number { font-size: 50px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scanline, .roll-number.settled, .meme-card, .cursor { animation: none !important; }
+}
+
+</style>
+</head>
+<body>
+
+<div class="crt-overlay" aria-hidden="true"></div>
+
+<main class="terminal" role="main">
+  <div class="titlebar">
+    <div class="dots">
+      <span class="dot dot-red"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+    </div>
+    <div class="titlebar-name">meta-meme.exe</div>
+    <div class="clock" id="clock">--:--:--</div>
+  </div>
+
+  <div class="scanline"></div>
+
+  <div class="screen" id="screen">
+    <!-- rendered by app.js -->
+  </div>
+
+  <div class="statusbar">
+    <span id="status-left">bereit</span>
+    <span id="status-right">v1.0</span>
+  </div>
+</main>
+
+<script>
+/* ---------- Datenzugriff ---------- */
+let MEMES = null;
+
+async function loadMemes() {
+  try {
+    const res = await fetch('memes.json');
+    MEMES = await res.json();
+  } catch (e) {
+    console.error('Konnte memes.json nicht laden:', e);
+    MEMES = {};
+  }
+}
+
+function getMeme(nr) {
+  const entry = MEMES[String(nr)];
+  if (!entry) return null;
+  const varianten = entry.varianten || [];
+  if (varianten.length > 0) {
+    const v = varianten[Math.floor(Math.random() * varianten.length)];
+    return entry.text + v;
+  }
+  return entry.text;
+}
+
+/* ---------- Passwörter (wie im Original-Skript) ---------- */
+const ADMIN_PW = '0000';
+const OWNER_PW = '9999';
+
+/* ---------- Uhr ---------- */
+function tickClock() {
+  const el = document.getElementById('clock');
+  if (el) el.textContent = new Date().toLocaleTimeString('de-DE');
+}
+setInterval(tickClock, 1000);
+
+/* ---------- Helper zum Rendern ---------- */
+const screenEl = () => document.getElementById('screen');
+const statusLeft = () => document.getElementById('status-left');
+
+function setStatus(text, active = false) {
+  const el = statusLeft();
+  el.textContent = text;
+  el.classList.toggle('active', active);
+}
+
+function render(html) {
+  screenEl().innerHTML = html;
+}
+
+function h(strings, ...vals) {
+  return strings.reduce((acc, s, i) => acc + s + (vals[i] ?? ''), '');
+}
+
+/* ---------- Screens ---------- */
+
+function screenMain() {
+  setStatus('bereit');
+  render(h`
+    <div class="eyebrow">meta-meme // hauptmenü</div>
+    <div class="hero-title">Bist du bereit für dein <span class="accent">Meme</span>?<span class="cursor"></span></div>
+    <div class="row">
+      <button class="opt-btn" id="btn-yes"><span class="key">Y</span> Ja, würfeln</button>
+      <button class="opt-btn danger" id="btn-no"><span class="key">N</span> Beenden</button>
+    </div>
+    <button class="opt-btn ghost" id="btn-admin-link">→ admin zugang</button>
+  `);
+  document.getElementById('btn-yes').onclick = () => screenRoll();
+  document.getElementById('btn-no').onclick = () => screenEnd();
+  document.getElementById('btn-admin-link').onclick = () => screenLogin('admin');
+}
+
+function screenRoll() {
+  setStatus('würfelt…', true);
+  const finalNr = Math.floor(Math.random() * 40) + 1;
+  render(h`
+    <div class="eyebrow">meta-meme // ziehung</div>
+    <div class="roll-wrap">
+      <div class="roll-number" id="roll-num">--</div>
+      <div class="roll-label">meme wird gezogen</div>
+    </div>
+  `);
+  const numEl = document.getElementById('roll-num');
+  let ticks = 0;
+  const maxTicks = 18;
+  const interval = setInterval(() => {
+    ticks++;
+    if (ticks < maxTicks) {
+      numEl.textContent = String(Math.floor(Math.random() * 40) + 1).padStart(2, '0');
+    } else {
+      clearInterval(interval);
+      numEl.textContent = String(finalNr).padStart(2, '0');
+      numEl.classList.add('settled');
+      setTimeout(() => showMemeResult(finalNr), 500);
+    }
+  }, 55);
+}
+
+function showMemeResult(nr) {
+  setStatus('meme #' + nr);
+  const text = getMeme(nr) ?? 'Meme Nr. ' + nr + ' gibt es nicht.';
+  render(h`
+    <div class="eyebrow">meta-meme // meme #${String(nr).padStart(2,'0')}</div>
+    <div class="meme-card">
+      <div class="meme-tag">Meme <b>Nr. ${nr}</b></div>
+      ${escapeHtml(text)}
+    </div>
+    <div class="body-text">Noch ein Meme?</div>
+    <div class="row">
+      <button class="opt-btn" id="btn-again">Y Ja</button>
+      <button class="opt-btn danger" id="btn-stop">N Nein</button>
+    </div>
+  `);
+  document.getElementById('btn-again').onclick = () => screenRoll();
+  document.getElementById('btn-stop').onclick = () => screenMain();
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function screenLogin(target) {
+  const isOwner = target === 'owner';
+  const pw = isOwner ? OWNER_PW : ADMIN_PW;
+  setStatus(isOwner ? 'owner login' : 'admin login');
+  render(h`
+    <div class="eyebrow">meta-meme // ${isOwner ? 'owner' : 'admin'} login</div>
+    <div class="hero-title">Zugang gesperrt<span class="accent">.</span></div>
+    <div class="field">
+      <label for="pw-input">Passwort</label>
+      <input type="password" id="pw-input" autocomplete="off" inputmode="numeric" />
+      <div class="error-text" id="pw-error"></div>
+    </div>
+    <div class="row">
+      <button class="opt-btn" id="btn-submit">Entsperren</button>
+      <button class="opt-btn ghost" id="btn-back">Zurück</button>
+    </div>
+  `);
+  const input = document.getElementById('pw-input');
+  input.focus();
+  const tryLogin = () => {
+    if (input.value === pw) {
+      isOwner ? screenOwner() : screenAdmin();
+    } else {
+      document.getElementById('pw-error').textContent = 'Passwort falsch!';
+      input.value = '';
+      input.focus();
+    }
+  };
+  document.getElementById('btn-submit').onclick = tryLogin;
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryLogin(); });
+  document.getElementById('btn-back').onclick = () => (isOwner ? screenAdmin() : screenMain());
+}
+
+function screenAdmin() {
+  setStatus('admin bereich', true);
+  render(h`
+    <div class="eyebrow">meta-meme // admin bereich</div>
+    <div class="hero-title">Admin<span class="accent">.</span></div>
+    <div class="options">
+      <button class="opt-btn" id="a1"><span class="key">1</span> Zum Hauptmenü</button>
+      <button class="opt-btn" id="a2"><span class="key">2</span> Meme ohne Zufall anzeigen</button>
+      <button class="opt-btn" id="a3"><span class="key">3</span> Zum Owner-Bereich</button>
+      <button class="opt-btn danger" id="a4"><span class="key">4</span> Meta Meme beenden</button>
+    </div>
+  `);
+  document.getElementById('a1').onclick = () => screenMain();
+  document.getElementById('a2').onclick = () => screenAdminMemeInput();
+  document.getElementById('a3').onclick = () => screenLogin('owner');
+  document.getElementById('a4').onclick = () => screenEnd();
+}
+
+function screenAdminMemeInput() {
+  setStatus('admin // meme wählen');
+  render(h`
+    <div class="eyebrow">meta-meme // admin</div>
+    <div class="field">
+      <label for="nr-input">Meme Nr. (1–40)</label>
+      <input type="number" id="nr-input" min="1" max="40" autocomplete="off" />
+      <div class="error-text" id="nr-error"></div>
+    </div>
+    <div class="row">
+      <button class="opt-btn" id="btn-show">Anzeigen</button>
+      <button class="opt-btn ghost" id="btn-back">Zurück</button>
+    </div>
+  `);
+  const input = document.getElementById('nr-input');
+  input.focus();
+  const show = () => {
+    const nr = parseInt(input.value, 10);
+    if (isNaN(nr)) {
+      document.getElementById('nr-error').textContent = 'Eingabe muss eine Zahl sein';
+      return;
+    }
+    showAdminMemeResult(nr);
+  };
+  document.getElementById('btn-show').onclick = show;
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') show(); });
+  document.getElementById('btn-back').onclick = () => screenAdmin();
+}
+
+function showAdminMemeResult(nr) {
+  const text = getMeme(nr);
+  render(h`
+    <div class="eyebrow">meta-meme // admin</div>
+    ${text
+      ? h`<div class="meme-card"><div class="meme-tag">Meme <b>Nr. ${nr}</b></div>${escapeHtml(text)}</div>`
+      : h`<div class="body-text">Meme Nr. ${nr} gibt's nicht.</div>`}
+    <div class="body-text">Noch ein Meme?</div>
+    <div class="row">
+      <button class="opt-btn" id="btn-again">Y Ja</button>
+      <button class="opt-btn danger" id="btn-stop">N Nein</button>
+    </div>
+  `);
+  document.getElementById('btn-again').onclick = () => screenAdminMemeInput();
+  document.getElementById('btn-stop').onclick = () => screenAdmin();
+}
+
+function screenOwner() {
+  setStatus('owner bereich', true);
+  render(h`
+    <div class="eyebrow">meta-meme // owner bereich</div>
+    <div class="hero-title">Owner<span class="accent">.</span></div>
+    <div class="options">
+      <button class="opt-btn" id="o1"><span class="key">1</span> Zum Hauptmenü</button>
+      <button class="opt-btn" id="o2"><span class="key">2</span> Zum Admin-Bereich</button>
+      <button class="opt-btn" id="o3"><span class="key">3</span> Meme-Liste</button>
+      <button class="opt-btn" id="o4"><span class="key">4</span> Meme ohne Zufall anzeigen</button>
+      <button class="opt-btn danger" id="o5"><span class="key">5</span> Meta Meme beenden</button>
+    </div>
+  `);
+  document.getElementById('o1').onclick = () => screenMain();
+  document.getElementById('o2').onclick = () => screenAdmin();
+  document.getElementById('o3').onclick = () => screenOwnerList();
+  document.getElementById('o4').onclick = () => screenAdminMemeInput();
+  document.getElementById('o5').onclick = () => screenEnd();
+}
+
+function screenOwnerList() {
+  setStatus('owner // meme-liste');
+  const items = Object.keys(MEMES)
+    .sort((a, b) => Number(a) - Number(b))
+    .map((key) => {
+      const entry = MEMES[key];
+      const varianten = entry.varianten || [];
+      if (varianten.length > 0) {
+        return varianten
+          .map((v) => h`<div class="list-item"><span class="idx">Nr. ${key}:</span>\n${escapeHtml(entry.text + v)}</div>`)
+          .join('');
+      }
+      return h`<div class="list-item"><span class="idx">Nr. ${key}:</span>\n${escapeHtml(entry.text)}</div>`;
+    })
+    .join('');
+  render(h`
+    <div class="eyebrow">meta-meme // owner // liste</div>
+    <div class="list-wrap">${items}</div>
+    <button class="opt-btn" id="btn-back">Fertig</button>
+  `);
+  document.getElementById('btn-back').onclick = () => screenOwner();
+}
+
+function screenEnd() {
+  setStatus('beendet');
+  render(h`
+    <div class="hero-title">Auf Wiedersehen<span class="accent">.</span></div>
+    <div class="body-text">meta-meme wurde geschlossen.</div>
+    <button class="opt-btn" id="btn-restart">Neu starten</button>
+  `);
+  document.getElementById('btn-restart').onclick = () => screenMain();
+}
+
+/* ---------- Start ---------- */
+(async function init() {
+  tickClock();
+  render(h`<div class="body-text">lädt memes.json…<span class="cursor"></span></div>`);
+  await loadMemes();
+  screenMain();
+})();
+
+</script>
+</body>
+</html>
